@@ -9,7 +9,7 @@ use Zodimo\FRP\Listeners\ListenerInterface;
 trait FrpTestingEnvironmentFactoryTrait
 {
     /**
-     * @param array<ListenerInterface> $listeners
+     * @param array<class-string<ListenerInterface>> $listeners
      */
     public function createFrpTestEnvironment(array $listeners = []): FrpTestingEnvironment
     {

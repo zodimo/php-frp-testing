@@ -38,7 +38,7 @@ class SignalServiceTest extends TestCase
     {
         $testingEnv = $this->createFrpTestEnvironment();
 
-        $this->runtime = $testingEnv->runtime;
+        $this->runtime = $testingEnv->container->get(Runtime::class);
         $this->eventDispatcher = $testingEnv->container->get(EventDispatcherInterface::class);
         $this->signalConfigFactoryService = new SignalConfigFactoryService($testingEnv->container);
         $this->signalFactoryService = new SignalFactoryService($this->runtime);

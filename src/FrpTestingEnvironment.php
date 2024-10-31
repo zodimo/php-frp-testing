@@ -10,38 +10,44 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Zodimo\FRP\Listeners\FrpRuntimeListener;
 use Zodimo\FRP\Listeners\ListenerInterface;
-use Zodimo\FRP\Runtime;
 
 class FrpTestingEnvironment
 {
     public ContainerInterface $container;
-    public Runtime $runtime;
 
     public function __construct(
-        ContainerInterface $container,
-        Runtime $runtime
+        ContainerInterface $container
     ) {
         $this->container = $container;
-        $this->runtime = $runtime;
     }
 
     /**
-     * @param array<ListenerInterface> $listeners
+     * @param array<class-string<ListenerInterface>> $listeners
      */
     public static function create(array $listeners = []): FrpTestingEnvironment
     {
-        $wireUpListener = function (ListenerInterface $listener, FrpListenerProvider $listenerProvider): void {
-            foreach ($listener->listen() as $eventClass) {
-                $listenerProvider->on($eventClass, [$listener, 'process']);
-            }
-        };
-
-        $listenerProvider = new FrpListenerProvider();
         $containerBuilder = new ContainerBuilder();
+        $allListeners = [
+            FrpRuntimeListener::class,
+            ...$listeners,
+        ];
+
         $containerBuilder->addDefinitions(
             [
-                EventDispatcherInterface::class => function (ContainerInterface $container) use ($listenerProvider) {
+                EventDispatcherInterface::class => function (ContainerInterface $container) use ($allListeners) {
+                    $listenerProvider = new FrpListenerProvider();
+                    $wireUpListener = function (ListenerInterface $listener, FrpListenerProvider $listenerProvider): void {
+                        foreach ($listener->listen() as $eventClass) {
+                            $listenerProvider->on($eventClass, [$listener, 'process']);
+                        }
+                    };
+
                     $dispatcher = new EventDispatcher();
+
+                    foreach ($allListeners as $listener) {
+                        $wireUpListener($container->get($listener), $listenerProvider);
+                    }
+
                     foreach ($listenerProvider->listeners as $event => $listeners) {
                         foreach ($listeners as $listener) {
                             $dispatcher->addListener($event, $listener);
@@ -54,20 +60,8 @@ class FrpTestingEnvironment
         );
         $container = $containerBuilder->build();
 
-        $runtime = new Runtime();
-
-        $allListeners = [
-            new FrpRuntimeListener($runtime),
-            ...$listeners,
-        ];
-
-        foreach ($allListeners as $listener) {
-            $wireUpListener($listener, $listenerProvider);
-        }
-
         return new self(
             $container,
-            $runtime,
         );
     }
 }

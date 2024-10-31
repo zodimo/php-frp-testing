@@ -22,7 +22,7 @@
   "require": {
     "php": "~7.4|~8",
     "zodimo/frp": "^0",
-    "symfony/event-dispatcher": "^5.4",
+    "symfony/event-dispatcher": "^5|^6|^7",
     "php-di/php-di": "^6.4"
   },
   "require-dev": {
